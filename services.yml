@@ -1,0 +1,72 @@
+version: '3.7'
+services:
+  jupyter:
+    image: jupyter/base-notebook
+    container_name: jupyter
+    restart: always
+    ports:
+      - "8888:8888"
+    volumes:
+      - /root/docker_data/service/data/jupyter/:/home/jovyan/work
+    tty: true
+    networks:
+      service_net:
+        ipv4_address: 172.19.0.20
+    extra_hosts:
+      - "mainhost:172.17.0.1"
+    environment:
+      - LC_ALL=zh_CN.UTF-8
+      - LANG=zh_CN.UTF-8
+      - LANGUAGE=zh_CN.UTF-8
+      - TZ=Asia/Shanghai
+      - NB_UID=0
+      - NB_GID=0
+      - NB_GROUP=root
+      - NB_USER=root
+      - "NotebookApp.password:argon2:$argon2id$v=19$m=10240,t=10,p=8$sesVZQ12Oq97ziRzdZCyCg$F604h3ow0JWAsa5Ow57u0w"
+  mysql:
+    image: mysql:5.7.36
+    container_name: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    # user:
+    #   - "0:0"
+    volumes:
+      - /root/docker_data/service/data/mysql/conf:/etc/mysql/conf.d
+      - /root/docker_data/service/data/mysql/data:/var/lib/mysql
+      - /root/docker_data/service/data/mysql/log:/var/log/mysql
+    tty: true
+    networks:
+      service_net:
+        ipv4_address: 172.19.0.21
+    extra_hosts:
+      - "mainhost:172.17.0.1"
+    environment:
+      - MYSQL_ROOT_PASSWORD=zxczxc
+      
+  phpmyadmin:
+    depends_on:
+      - mysql
+    image: phpmyadmin
+
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8283:80"
+    tty: true
+    networks:
+      service_net:
+        ipv4_address: 172.19.0.22
+    extra_hosts:
+      - "mainhost:172.17.0.1"
+    environment:
+      - PMA_HOST=172.17.0.21
+      - PMA_PORT=3306
+    
+networks:
+  service_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.19.0.0/24"
